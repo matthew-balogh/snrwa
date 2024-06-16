@@ -1,0 +1,42 @@
+# Concepts
+
+## Logarithmic scale
+
+**Logarithmic scale** or simply **log scale** is used to display data that would span a broad range of values on a _linear scale_, especially when there are significant magnitude differences between the individual data points. [@wikipedia-logscl]
+
+While on a _linear scale_, each unit corresponds to the same increment on the scale, on a _logarithmic scale_ each unit corresponds to a multiple of the base value and each subsequent unit is the multiplication of the previous one using the base value. [@wikipedia-logscl]
+
+### Semi-log plot
+
+A **semi-log plot** or graph has one axis on a logarithmic and one axis on a linear scale. [@wikipedia-smlogplt]
+
+### Log-log plot
+
+A **log-log plot** or graph has both its abscissa and ordinate in a logarithmic scale.
+
+::: {.callout-note}
+A semi-log scaled plot can help in the following:
+
+- shrink the data points into a smaller area
+- draw the best-fit line if the original data follows an exponential trend
+:::
+
+```{r, echo=FALSE,include=FALSE}
+library(ggplot2)
+
+df <- data.frame(
+  x = c(1, 2, 3)
+)
+
+df$y <- 2^(df$x)
+
+model <- lm(log2(y) ~ x, data = df)
+
+ggplot(df, aes(x, y = exp(predict(model, df)))) +
+  geom_line() +
+  theme_classic()
+```
+
+::: {.callout-tip}
+See @exm-log-scale in the Appendix section for a practical example on this topic.
+:::

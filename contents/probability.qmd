@@ -1,0 +1,29 @@
+# Probability
+
+## Conditional Probability
+
+**Conditional probability** is the probability of event _A_, given that event _B_ has occured.
+
+:::{#def-prb-1}
+_Bayes theorem_, describing the relationship between dependent events _A_, and _B_.
+
+$$
+P(A|B)=\frac{P(A)\times{P(B|A)}}{P(B)}
+$$
+
+:::
+
+| Part                    | Notation  | Description                                               |
+| --- | - | ----- |
+| _posterior probability_ | $P(A|B)$  | Probability of A, given that B occured                    |
+| _prior probability_     | $P(A)$    | Probability of A alone                                    |
+| _likelihood_            | $P(B|A)$  | Probability of B, given that A occured                    |
+| _marginal likelihood_   | $P(B)$    | Probability of B alone                                    |
+
+: Parts of the _Bayes formula_. [@pml]
+
+@def-prb-1 can be interpreted as if we want to determine the probability of an event _Q_ in light of another event, then we can calculate it by examining the independent probabilities of the two events and the probability of the other event given that the event _Q_ in question has occured.
+
+::: {.callout-tip}
+See @exm-prb-1 in the Appendix section for a practical example on this topic.
+:::

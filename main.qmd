@@ -1,0 +1,36 @@
+---
+title: A Personal Paper on Statistics and its Real World Applications
+author: Matthew Balogh
+format:
+  pdf:
+    papersize: A5
+    margin-left: 1cm
+    margin-right: 1cm
+    margin-top: 1.5cm
+bibliography: ./contents/citations.bib
+csl: ./environment/ieee.csl
+toc: true
+execute:
+  echo: false
+  warning: false
+knitr:
+  opts_chunk: 
+    R.options:
+      width: 60
+---
+
+
+\newpage
+{{< include ./contents/probability.qmd >}}
+\newpage
+{{< include ./contents/classification.qmd >}}
+\newpage
+{{< include ./contents/concepts.qmd >}}
+\newpage
+{{< include ./contents/appendix.qmd >}}
+\newpage
+{{< include ./contents/tables.qmd >}}
+
+
+\newpage
+# References

@@ -1,0 +1,33 @@
+# Classification
+
+## Naïve Bayes
+
+**Naïve Bayes classification** relies on the method that describes the probability of an event in light of additional information.
+
+The classification is based on the following question:
+
+> "Based on prior evidence, what is the most likely class of a new unlabeled instance?" [@pml]
+
+To make use of prior evidence, the method utilizes the concept of the _conditional probability_.
+
+:::{#def-clssf-1}
+_Bayes formula_ for conditional probability.
+
+$$
+P(A|B)=\frac{P(A)\times{P(B|A)}}{P(B)}
+$$
+
+:::
+
+:::{#def-clssf-2}
+Conditional probability with multiple predictors, describing the relationship between dependent events _A_ and _S_, where _S_ is an _n_-term set of independent events based on the _Naïve Bayes_ assumption.
+
+$$
+P(A|S)=\frac{P(A)\times{P(s_1|A)}\times{P(s_2|A)}\times{\dots}\times{P(s_n|A)}}{P(s_1, s_2, \dots, s_n)}
+$$
+
+:::
+
+::: {.callout-tip}
+See @exm-clssf-1 in the Appendix section for a practical example on this topic.
+:::

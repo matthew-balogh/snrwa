@@ -1,0 +1,407 @@
+```{r, context="setup", include=FALSE}
+# load libraries
+library(ggplot2)
+library(tidyverse)
+library(magrittr)
+
+# set options/configuration
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Appendix
+
+<!-- Conditional probability -->
+
+:::{#exm-prb-1}
+Imagine a bus station with its predefined schedule table. We want to determine whether the bus departing at 8 AM from the nearest station will be late if it's raining when we wake up. With this information, we might consider taking the metro, which is only a few minutes farther than the bus station.
+
+The bus company has a database with historical records of routes, each of which indicates whether the bus reached a certain station in time or not. We also have another dataset that contains weather conditions.
+
+Projecting the dataset to the bus route and station in question and merging with weather data, we can determine the _posterior probability_ in question, that is:
+
+$$
+P(A|B)=P(bus \ is \ late \ | \ rain \ in \ the \ morning)
+$$
+
+
+```{r, context="data", include=FALSE}
+# Data containing only route R1 and station ST42 data
+
+df.bus.history <- data.frame(
+  date = c(
+    # 2023
+    ## first week of Jun
+    seq(from = as.Date("2023-06-01"), to = as.Date("2023-06-02"), by = "days"),
+    seq(from = as.Date("2023-06-05"), to = as.Date("2023-06-07"), by = "days"),
+    ## first week of Jul
+    seq(from = as.Date("2023-07-03"), to = as.Date("2023-07-07"), by = "days"),
+    ## first week of Aug
+    seq(from = as.Date("2023-08-01"), to = as.Date("2023-08-04"), by = "days"),
+    as.Date("2023-08-07"),
+    ## first week of Sep
+    as.Date("2023-09-01"),
+    seq(from = as.Date("2023-09-04"), to = as.Date("2023-09-07"), by = "days"),
+    ## first week of Oct
+    seq(from = as.Date("2023-10-02"), to = as.Date("2023-10-06"), by = "days"),
+    ## first week of Nov
+    seq(from = as.Date("2023-11-01"), to = as.Date("2023-11-03"), by = "days"),
+    seq(from = as.Date("2023-11-06"), to = as.Date("2023-11-07"), by = "days"),
+    ## first week of Dec
+    as.Date("2023-12-01"),
+    seq(from = as.Date("2023-12-04"), to = as.Date("2023-12-07"), by = "days"),
+
+    # 2024
+    ## first week of Jan
+    seq(from = as.Date("2024-01-01"), to = as.Date("2024-01-05"), by = "days"),
+    ## first week of Feb
+    seq(from = as.Date("2024-02-01"), to = as.Date("2024-02-02"), by = "days"),
+    seq(from = as.Date("2024-02-05"), to = as.Date("2024-02-07"), by = "days"),
+    ## first week of Mar
+    as.Date("2024-03-01"),
+    seq(from = as.Date("2024-03-04"), to = as.Date("2024-03-07"), by = "days"),
+    ## first week of Apr
+    seq(from = as.Date("2024-04-01"), to = as.Date("2024-04-05"), by = "days"),
+    ## first week of May
+    seq(from = as.Date("2024-05-01"), to = as.Date("2024-05-03"), by = "days"),
+    seq(from = as.Date("2024-05-06"), to = as.Date("2024-05-07"), by = "days")
+  ),
+  schedule_outcome = c(
+    # 2023
+    "On schedule", "On schedule", "Late", "On schedule", "On schedule",
+    "On schedule", "On schedule", "On schedule", "On schedule", "On schedule",
+    "On schedule", "On schedule", "On schedule", "On schedule", "Late",
+    "Late", "On schedule", "Late", "On schedule", "On schedule",
+    "On schedule", "On schedule", "On schedule", "On schedule", "On schedule",
+    "On schedule", "On schedule", "Late", "On schedule", "Late",
+    "Late", "Late", "On schedule", "On schedule", "On schedule",
+    # 2024
+    "Late", "Late", "On schedule", "Late", "On schedule",
+    "Late", "Late", "Late", "Late", "On schedule",
+    "Late", "On schedule", "On schedule", "On schedule", "On schedule",
+    "Late", "On schedule", "Late", "On schedule", "On schedule",
+    "On schedule", "On schedule", "On schedule", "On schedule", "On schedule"
+  ),
+  morning_weather = c(
+    # 2023
+    "No rain", "No rain", "No rain", "No rain", "No rain",
+    "No rain", "No rain", "No rain", "No rain", "No rain",
+    "No rain", "Rain", "No rain", "No rain", "No rain",
+    "Rain", "No rain", "Rain", "No rain", "No rain",
+    "No rain", "Rain", "Rain", "No rain", "No rain",
+    "Rain", "Rain", "No rain", "Rain", "Rain",
+    "Rain", "Rain", "No rain", "Rain", "No rain",
+    # 2024
+    "No rain", "Rain", "No rain", "Rain", "Rain",
+    "Rain", "Rain", "Rain", "No rain", "No rain",
+    "Rain", "No rain", "Rain", "No rain", "No rain",
+    "No rain", "No rain", "Rain", "Rain", "Rain",
+    "No rain", "No rain", "No rain", "No rain", "No rain"
+  )
+)
+
+df.bus.history <- df.bus.history |>
+  mutate(
+    rowid = row_number(),
+    schedule_outcome = fct(schedule_outcome),
+    morning_weather = fct(morning_weather)
+  ) |>
+  relocate(
+    rowid
+  )
+
+df.bus.history.rowcount <- nrow(df.bus.history)
+```
+
+The _prior probability_, that is $P(A)=P(bus \ is \ late)$, is the proportion of records, in which the bus had been marked as **late** to the station in any given occasion in the past.
+
+The _likelihood_, that is $P(B|A)=P(rain \ in \ the \ morning \ | \ bus \ is \ late)$, is the proportion of records, in which the morning weather had been marked as **rain** considering only the records, in which the bus had been marked as **late** in any given occasion in the past.
+
+The _marginal likelihood_, that is $P(B)=P(rain \ in \ the \ morning)$, is the proportion of records, in which the morning weather had been marked as **rain** in any given occasion in the past.
+
+```{r}
+# Parts of the formula
+
+prior.probability <- df.bus.history |>
+  filter(schedule_outcome == "Late") |>
+  nrow() |>
+  divide_by(df.bus.history.rowcount)
+
+# !
+likelihood <- df.bus.history |>
+  filter(morning_weather == "Rain" & schedule_outcome == "Late") |>
+  nrow() |>
+  divide_by(
+    df.bus.history |>
+      filter(schedule_outcome == "Late") |>
+      nrow()
+  )
+
+marginal.likelihood <- df.bus.history |>
+  filter(morning_weather == "Rain") |>
+  nrow() |>
+  divide_by(df.bus.history.rowcount)
+```
+
+\newpage
+
+The values of the parts of the equation - based on @tbl-exm-prb-1-@tbl-exm-prb-4 - are the following:
+
+```{r}
+# Converting into a table
+
+tbl.bayes.parts <- c(
+    prior.probability,
+    likelihood,
+    marginal.likelihood
+  ) |>
+  round(4) |>
+  as.matrix(ncol = 1)
+
+colnames(tbl.bayes.parts) <- c("Value")
+rownames(tbl.bayes.parts) <- c("Prior probability", "Likelihood", "Marginal likelihood")
+
+tbl.bayes.parts |>
+  as.table() |>
+  print()
+```
+
+Expressed with the _Bayes formula_:
+
+$$
+\begin{split}
+P(A|B)=
+P(bus \ is \ late \ | \ rain \ in \ the \ morning ) \\
+=\frac{\frac{18}{60}\times{\frac{12}{18}}}
+    {\frac{23}{60}} \\
+=0.5217
+\end{split}
+$$
+
+That is, the probability that the bus will be late if it rains in the morning is around **52%**.
+
+<!-- Warning -->
+:::: {.callout-warning}
+This example is solely based on the small sixty-record sample of @tbl-exm-prb-1, to demonstrate the determination of different parts of the _Bayes formula_.
+::::
+:::
+
+\newpage
+
+<!-- Classification -->
+
+:::{#exm-clssf-1}
+Consider the scenario from @exm-prb-1 with a modification to the condition. Instead of determining whether the bus will be late if it rains in the morning, we are interested in whether the bus will be late if it rains on a winter day.
+
+The dataset is now labeled with seasonal information based on the date of the records.
+
+```{r, context="data", include=FALSE}
+fn.date.to.season <- function(d) {
+  month <- d |>
+    format("%m") |>
+    as.numeric()
+
+  if (month %in% c(12, 1, 2)) {
+    return("Winter")
+  } else if (month %in% c(3, 4, 5)) {
+    return("Spring")
+  } else if (month %in% c(6, 7, 8)) {
+    return("Summer")
+  } else if (month %in% c(9, 10, 11)) {
+    return("Fall")
+  }
+}
+
+df.bus.history <- df.bus.history |>
+  mutate(
+    season = (
+      date |>
+        sapply(fn.date.to.season) |>
+        factor(levels = c("Winter", "Spring", "Summer", "Fall"))
+    )
+  )
+```
+
+The _posterior probability_ in question is denoted as:
+
+$$
+\begin{split}
+P(A|S)=\frac{P(A)\times{P(s_1|A)}\times{P(s_2|A)}}{P(s_1, s_2)} \\ \\
+A=bus \ is \ late \\
+S=rain \ in \ the \ morning \ on \ a \ winter \ day \\
+s_1=rain \ in \ the \ morning \\
+s_2=in \ winter
+\end{split}
+$$
+
+The _prior probability_, that is $P(A)=P(bus \ is \ late)$, is the proportion of records, in which the bus had been marked as **late** to the station in any given occasion in the past.
+
+The _likelihood_ for $s_1$, that is $P(s_1|A)=P(rain \ in \ the \ morning \ | \ bus \ is \ late)$, is the proportion of records, in which the morning weather had been marked as **rain** considering only the records, in which the bus had been marked as **late** in any given occasion in the past.
+
+The _likelihood_ for $s_2$, that is $P(s_2|A)=P(in \ winter \ | \ bus \ is \ late)$, is the proportion of records, in which the season is **winter** considering only the records, in which the bus had been marked as **late** in any given occasion in the past.
+
+The _marginal likelihood_,
+\newline
+that is $P(s_1,s_2)=P(rain \ in \ the \ morning \ on \ a \ winter \ day)$, is the proportion of records, in which the morning weather had been marked as **rain** and the season as **winter** in any given occasion in the past.
+
+```{r}
+# Parts of the formula
+
+prior.probability <- df.bus.history |>
+  filter(schedule_outcome == "Late") |>
+  nrow() |>
+  divide_by(df.bus.history.rowcount)
+
+likelihood.s1 <- df.bus.history |>
+  filter(morning_weather == "Rain" & schedule_outcome == "Late") |>
+  nrow() |>
+  divide_by(
+    df.bus.history |>
+      filter(schedule_outcome == "Late") |>
+      nrow()
+  )
+
+likelihood.s2 <- df.bus.history |>
+  filter(season == "Winter" & schedule_outcome == "Late") |> 
+  nrow() |>
+    divide_by(
+    df.bus.history |>
+      filter(schedule_outcome == "Late") |>
+      nrow()
+  )
+
+marginal.likelihood <- df.bus.history |>
+  filter(morning_weather == "Rain" & season == "Winter") |>
+  nrow() |>
+  divide_by(df.bus.history.rowcount)
+```
+
+The values of the parts of the equation - based on @tbl-exm-prb-1-@tbl-exm-prb-3, and @tbl-exm-clssf-1 - are the following:
+
+```{r}
+# Converting into a table
+
+tbl.bayes.parts <- c(
+    prior.probability,
+    likelihood.s1,
+    likelihood.s2,
+    marginal.likelihood
+  ) |>
+  round(4) |>
+  as.matrix(ncol = 1)
+
+colnames(tbl.bayes.parts) <- c("Value")
+rownames(tbl.bayes.parts) <- c("Prior probability", "Likelihood (s1)", "Likelihood (s2)", "Marginal likelihood")
+
+tbl.bayes.parts |>
+  as.table() |>
+  print()
+```
+
+Expressed with the _Bayes formula_:
+
+$$
+\begin{split}
+P(A|S)=\frac{\frac{18}{60}\times{\frac{12}{18}}\times{\frac{9}{18}}}{\frac{9}{60}} \\
+=\frac{0.3\times{0.67}\times{0.5}}{0.15} \\
+=0.6667
+\end{split}
+$$
+
+That is, the probability that the bus will be late if it rains in the morning during winter is around **66%**.
+
+<!-- Warning -->
+:::: {.callout-warning}
+This example is solely based on the small sixty-record sample of @tbl-exm-prb-1, to demonstrate the multiple predictor version of the _Bayes formula_.
+::::
+:::
+
+\newpage
+
+<!-- Logarithmic scale -->
+
+::: {#exm-log-scale}
+Finding the best-fit line (might be a curve?) - utilizing logarithmic scale.
+
+```{r, context="data", include=FALSE}
+df.logscale <- data.frame(
+    x = c(10, 15, 20, 25, 30, 35, 40, 50, 60, 90),
+    y = c(2, 4, 6, 8, 7, 16, 32, 64, 128, 1024)
+)
+
+model <- lm(log2(y) ~ x, data = df.logscale)
+fit_curve <- 2^(predict(model, data.frame(x = 1:100)))
+```
+
+Given a dataset which shows a raising but strange tendency depicted in @fig-1-1. If one tries to fit a straight line between these data points they observe that those do not hug the linear so well. It seems that the differences between values on the ordinate get bigger as the values on the abscissa increase. In such case, switching to a logarithmic scale on the ordinate might be a good decision as presented in @fig-1-2.
+
+```{r, warning=FALSE}
+#| label: fig-1
+#| layout-ncol: 2
+#| fig-cap: "The same dataset plotted on two graphs with linear and semi-log scales, respectively."
+#| fig-subcap:
+#|  - "Linear scales, the data shows non-linear uptrend."
+#|  - "Semi-log scales, the data shows an uptrend close to linear."
+
+
+ggplot(df.logscale, aes(x, y)) +
+    geom_point(col = "red") +
+    # 'best-fit' line
+    geom_smooth(method = "lm", formula = y ~ x, se = F, col = "blue") +
+    scale_x_continuous(limits = c(1, 100)) +
+    scale_y_continuous(limits = c(0, 2000)) +
+    theme_classic()
+
+ggplot(df.logscale, aes(x, y)) +
+    geom_point(col = "purple") +
+    scale_x_continuous(limits = c(1, 100)) +
+    scale_y_continuous(limits = c(1, 2000), trans = "log2") +
+    theme_classic()
+```
+
+The data on the semi-log (`log2`) plot shows a tendency close to linear which means that the data on the original scale follows an exponential trend. One could find the best-fit line on the semi-log plot (@fig-2-1) and then transform it back to the original scales to arrive at a non-linear, exponential best-fit curve (@fig-2-2) that describes the original data on the original scales.
+
+```{r}
+#| label: fig-2
+#| layout-ncol: 2
+#| fig-cap: ""
+#| fig-subcap:
+#|  - ""
+#|  - ""
+
+
+ggplot(df.logscale, aes(x, y)) +
+    geom_point(col = "purple") +
+    # best-fit line
+    geom_smooth(method = "lm", formula = y ~ x, se = F, col = "blue", lwd = .5) +
+    scale_x_continuous(limits = c(1, 100)) +
+    scale_y_continuous(limits = c(1, 2000), trans = "log2") +
+    theme_classic()
+
+ggplot(mapping = aes(x, y)) +
+    geom_point(data = df.logscale, col = "red") +
+    geom_line(data = data.frame(
+        x = 1:100,
+        y = fit_curve
+    )) +
+    scale_x_continuous(limits = c(1, 150)) +
+    scale_y_continuous() +
+    theme_classic()
+```
+
+:::: {.callout-warning}
+Applying `geom_smooth` on the original data indicates a different curve from the one acquired above. This might be because data points on the semi-log plot do not perfectly fit the straight line, nor the exponential curve on the original plot.
+
+```{r}
+ggplot(df.logscale, aes(x, y)) +
+    geom_point(col = "red") +
+    geom_line(data = data.frame(
+        x = 1:100,
+        y = fit_curve
+    )) +
+    geom_smooth(method = "loess", formula = y ~ x, se = F, col = "grey50") +
+    scale_x_continuous(limits = c(1, 150)) +
+    scale_y_continuous() +
+    theme_classic()
+```
+::::
+:::

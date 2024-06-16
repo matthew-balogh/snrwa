@@ -1,0 +1,63 @@
+```{r, context="setup", include=FALSE}
+library(knitr)
+library(kableExtra)
+
+# set options/configuration
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, context="setup", include=FALSE}
+fn.print.table <- function(df) {
+  return (
+    df |>
+      kable(format = "latex", booktabs = TRUE, longtable = TRUE, row.names = TRUE) |>
+      kable_styling(latex_options = c("repeat_header"))
+  )
+}
+```
+
+# Tables
+
+```{r}
+#| label: tbl-exm-prb-1
+#| tbl-cap: "A sample of a historical dataset containing the bus schedule outcome along with the morning weather condition for all the first 5 operating days of each month in the past year related to the route and station in @exm-prb-1 and @exm-clssf-1."
+
+df.bus.history |>
+  fn.print.table()
+```
+
+```{r}
+#| label: tbl-exm-prb-2
+#| tbl-cap: "Filtered records of @tbl-exm-prb-1, where the bus schedule outcome is _Late_."
+
+df.bus.history |>
+  filter(schedule_outcome == "Late") |>
+  fn.print.table()
+```
+
+```{r}
+#| label: tbl-exm-prb-3
+#| tbl-cap: "Filtered records of @tbl-exm-prb-1, where the bus schedule outcome is _Late_ and the weather condition is _Rain_."
+
+df.bus.history |>
+  filter(schedule_outcome == "Late" & morning_weather == "Rain") |>
+  fn.print.table()
+```
+
+```{r}
+#| label: tbl-exm-prb-4
+#| tbl-cap: "Filtered records of @tbl-exm-prb-1, where the weather condition is _Rain_."
+
+df.bus.history |>
+  filter(morning_weather == "Rain") |>
+  fn.print.table()
+```
+
+```{r}
+#| label: tbl-exm-clssf-1
+#| tbl-cap: "Filtered records of @tbl-exm-prb-1, where the weather condition is _Rain_ and the season is _Winter_."
+
+df.bus.history |>
+  filter(morning_weather == "Rain" & season == "Winter") |>
+  fn.print.table()
+```
